@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UMAMI 訂購統計表單</title>
+  <style>
+    :root {
+      --bg: #f7efe4;
+      --panel: rgba(255, 250, 243, 0.92);
+      --panel-strong: #fffaf3;
+      --ink: #2d2118;
+      --muted: #7c6657;
+      --line: rgba(97, 67, 42, 0.15);
+      --accent: #d56a2d;
+      --accent-deep: #9f4210;
+      --accent-soft: rgba(213, 106, 45, 0.12);
+      --ok: #20755f;
+      --warn: #c44832;
+      --shadow: 0 24px 60px rgba(74, 46, 23, 0.14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Sans TC", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(247, 185, 118, 0.34), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(214, 127, 93, 0.18), transparent 28%),
+        linear-gradient(160deg, #fbf4ea 0%, #f6ecdf 45%, #efe3d4 100%);
+    }
+
+    .shell {
+      width: min(1240px, calc(100vw - 24px));
+      margin: 12px auto 36px;
+      padding: 22px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .hero-card,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero-card {
+      padding: 28px;
+      background:
+        linear-gradient(135deg, rgba(255, 246, 235, 0.95), rgba(255, 252, 247, 0.88)),
+        linear-gradient(120deg, rgba(255, 175, 110, 0.16), transparent 40%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      right: -40px;
+      top: -36px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(213, 106, 45, 0.2), transparent 68%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.74);
+      color: var(--accent-deep);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    h1 {
+      margin: 18px 0 10px;
+      font-size: clamp(32px, 5vw, 54px);
+      line-height: 1.03;
+    }
+
+    .hero-copy {
+      margin: 0;
+      max-width: 62ch;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 18px;
+    }
+
+    .stat {
+      padding: 18px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(250, 242, 232, 0.9));
+      border: 1px solid var(--line);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: clamp(26px, 4vw, 38px);
+      line-height: 1;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      padding: 20px;
+    }
+
+    .panel h2 {
+      margin: 0 0 8px;
+      font-size: 24px;
+    }
+
+    .panel-copy {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .toolbar.meta {
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sync-status {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .sync-status[data-state="ok"] {
+      color: var(--ok);
+    }
+
+    .sync-status[data-state="error"] {
+      color: var(--warn);
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .primary {
+      padding: 12px 16px;
+      color: #fff;
+      background: linear-gradient(180deg, var(--accent), var(--accent-deep));
+      box-shadow: 0 12px 24px rgba(159, 66, 16, 0.24);
+    }
+
+    .secondary {
+      padding: 12px 16px;
+      color: var(--accent-deep);
+      background: var(--accent-soft);
+      border: 1px solid rgba(213, 106, 45, 0.2);
+    }
+
+    .ghost {
+      padding: 10px 14px;
+      color: var(--warn);
+      background: rgba(196, 72, 50, 0.08);
+      border: 1px solid rgba(196, 72, 50, 0.14);
+    }
+
+    .orders {
+      display: grid;
+      gap: 14px;
+    }
+
+    .order-card {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: var(--panel-strong);
+      overflow: hidden;
+    }
+
+    .order-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255, 245, 233, 0.9), rgba(255, 250, 244, 0.75));
+    }
+
+    .order-head strong {
+      display: block;
+      font-size: 18px;
+    }
+
+    .order-head span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .order-body {
+      padding: 18px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .input,
+    .textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .textarea {
+      resize: vertical;
+      min-height: 86px;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .menu-section {
+      display: grid;
+      gap: 12px;
+    }
+
+    .menu-section + .menu-section {
+      margin-top: 6px;
+    }
+
+    .menu-section-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--accent-deep);
+    }
+
+    .menu-card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fffdf9;
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .option-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .option-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .option-choices {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .option-choice {
+      flex: 1 1 0;
+      min-width: 92px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .option-choice.active {
+      border-color: rgba(159, 66, 16, 0.35);
+      background: rgba(213, 106, 45, 0.14);
+      color: var(--accent-deep);
+    }
+
+    .option-warning {
+      color: var(--warn);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .menu-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .menu-name {
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .menu-meta {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .price {
+      color: var(--accent-deep);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .qty-stepper {
+      display: inline-grid;
+      grid-template-columns: 42px 1fr 42px;
+      align-items: center;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .stepper-btn {
+      height: 42px;
+      background: rgba(213, 106, 45, 0.1);
+      color: var(--accent-deep);
+      font-size: 20px;
+    }
+
+    .qty-value {
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .summary-card {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255, 248, 239, 0.98), rgba(255, 253, 249, 0.95));
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .summary-card h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .summary-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      font-weight: 800;
+      color: var(--accent-deep);
+    }
+
+    .summary-kpis {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .kpi {
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid var(--line);
+    }
+
+    .kpi span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .kpi strong {
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .empty {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(124, 102, 87, 0.08);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .chip {
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(196, 72, 50, 0.08);
+      color: var(--warn);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .footer-note {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 960px) {
+      .hero,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .menu-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: calc(100vw - 12px);
+        padding: 10px;
+      }
+
+      .hero-card,
+      .panel {
+        padding: 16px;
+        border-radius: 20px;
+      }
+
+      .stats,
+      .summary-kpis,
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .order-head {
+        flex-direction: column;
+        align-items: start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <article class="hero-card">
+        <div class="eyebrow">UMAMI 團購整理頁</div>
+        <h1>UMAMI甜甜圈統計表單</h1>
+        <p class="hero-copy">把好運傳下去!底下甜點跟飲料每人可以各選一種，再幫我按加入訂單!</p>
+      </article>
+      <aside class="hero-card stats">
+        <div class="stat">
+          <span>可選品項</span>
+          <strong id="menu-count">0</strong>
+        </div>
+        <div class="stat">
+          <span>目前訂單</span>
+          <strong id="order-count">0</strong>
+        </div>
+        <div class="stat">
+          <span>總份數</span>
+          <strong id="item-count">0</strong>
+        </div>
+        <div class="stat">
+          <span>總金額</span>
+          <strong id="total-amount">$0</strong>
+        </div>
+      </aside>
+    </section>
+
+    <section class="layout">
+      <main class="panel" id="order-form-panel">
+        <h2>訂購表單</h2>
+        <p class="panel-copy">再麻煩大家填寫真實姓名</p>
+        <div class="toolbar">
+          <button class="primary" id="add-order-btn" type="button">新增一筆訂單</button>
+          <button class="ghost" id="clear-all-btn" type="button">清空全部訂單</button>
+        </div>
+        <div class="toolbar meta">
+          <div class="sync-status" id="sync-status" data-state="idle">目前使用本機模式，尚未連接跨裝置同步。</div>
+          <button class="secondary" id="sync-now-btn" type="button">重新同步</button>
+        </div>
+        <div id="orders" class="orders"></div>
+      </main>
+
+      <aside class="panel">
+        <h2>即時統計</h2>
+
+        <section class="summary-card">
+          <h3>總覽</h3>
+          <div class="summary-kpis">
+            <div class="kpi">
+              <span>訂購人數</span>
+              <strong id="summary-orders">0</strong>
+            </div>
+            <div class="kpi">
+              <span>總品項數</span>
+              <strong id="summary-items">0</strong>
+            </div>
+            <div class="kpi">
+              <span>甜點數量</span>
+              <strong id="dessert-count">0</strong>
+            </div>
+            <div class="kpi">
+              <span>飲料數量</span>
+              <strong id="drink-count">0</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="summary-card">
+          <h3>品項統計</h3>
+          <div id="item-summary"></div>
+        </section>
+
+        <section class="summary-card">
+          <h3>訂單明細</h3>
+          <div id="order-summary"></div>
+          <div class="summary-total">
+            <span>訂單總金額</span>
+            <strong id="order-summary-total">$0</strong>
+          </div>
+        </section>
+
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "umami-order-form-v1";
+    const ADMIN_PIN_KEY = "umami-order-admin-pin";
+    const ADMIN_PIN_DEFAULT = "A51233";
+    const SYNC_ENDPOINT = "https://script.google.com/macros/s/AKfycbyV7OT2gQveN6xA4721gH-WF_PnDSbKgN53U3hsGZcbk1JJAcafFEvYx4tTqxbGDIJB/exec";
+    const SYNC_POLL_MS = 15000;
+    const excludedNames = new Set(["任選四入口味甜甜圈", "小盒提拉米蘇"]);
+
+    const rawMenu = [
+      { name: "檸檬卡士達", price: 80, category: "甜點", note: "需前一天晚間 9 點前下單" },
+      { name: "玫瑰覆盆子", price: 80, category: "甜點", note: "需前一天晚間 9 點前下單" },
+      { name: "伯爵巧克力", price: 80, category: "甜點", note: "需前一天晚間 9 點前下單" },
+      { name: "提拉米蘇甜甜圈", price: 80, category: "甜點", note: "需前一天晚間 9 點前下單" },
+      { name: "芋泥肉鬆甜甜圈", price: 90, category: "甜點", note: "需前一天晚間 9 點前下單" },
+      { name: "小盒提拉米蘇", price: 120, category: "甜點", note: "" },
+      { name: "任選四入口味甜甜圈", price: 0, category: "甜點", note: "已依需求排除" },
+      { name: "草莓羅勒", price: 95, category: "甜點", note: "需前一天晚間 9 點前下單" },
+      { name: "美式咖啡", price: 70, category: "飲料", note: "", requiresTemperature: true },
+      { name: "拿鐵", price: 80, category: "飲料", note: "", requiresTemperature: true },
+      { name: "紅茶", price: 60, category: "飲料", note: "", requiresTemperature: true },
+      { name: "鍋煮奶茶", price: 80, category: "飲料", note: "", requiresTemperature: true },
+      { name: "莫西多氣泡飲", price: 70, category: "飲料", note: "" },
+      { name: "百香氣泡飲", price: 70, category: "飲料", note: "" }
+    ];
+
+    const menu = rawMenu.filter((item) => !excludedNames.has(item.name));
+    const menuCategories = ["甜點", "飲料"];
+
+    const state = loadState();
+
+    const ordersEl = document.getElementById("orders");
+    const menuCountEl = document.getElementById("menu-count");
+    const orderCountEl = document.getElementById("order-count");
+    const itemCountEl = document.getElementById("item-count");
+    const totalAmountEl = document.getElementById("total-amount");
+    const summaryOrdersEl = document.getElementById("summary-orders");
+    const summaryItemsEl = document.getElementById("summary-items");
+    const dessertCountEl = document.getElementById("dessert-count");
+    const drinkCountEl = document.getElementById("drink-count");
+    const itemSummaryEl = document.getElementById("item-summary");
+    const orderSummaryEl = document.getElementById("order-summary");
+    const orderSummaryTotalEl = document.getElementById("order-summary-total");
+    const orderFormPanelEl = document.getElementById("order-form-panel");
+    const syncStatusEl = document.getElementById("sync-status");
+    let syncTimer = null;
+    let syncWriteTimer = null;
+    let remoteUpdatedAt = "";
+    document.getElementById("add-order-btn").addEventListener("click", () => {
+      state.draftOrder = createBlankOrder();
+      persist();
+      render();
+      orderFormPanelEl?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    document.getElementById("clear-all-btn").addEventListener("click", () => {
+      if (!verifyAdminAccess()) return;
+      state.orders = [];
+      state.draftOrder = createBlankOrder();
+      persist();
+      render();
+      window.alert("已清空全部訂單");
+    });
+
+    document.getElementById("sync-now-btn").addEventListener("click", async () => {
+      await syncFromRemote({ forceMessage: true });
+    });
+
+    function createDefaultOptions() {
+      return Object.fromEntries(
+        menu
+          .filter((item) => item.requiresTemperature)
+          .map((item) => [item.name, { temperature: "" }])
+      );
+    }
+
+    function createBlankOrder() {
+      return {
+        id: crypto.randomUUID(),
+        customer: "",
+        note: "",
+        quantities: Object.fromEntries(menu.map((item) => [item.name, 0])),
+        options: createDefaultOptions(),
+        errors: {}
+      };
+    }
+
+    function hydrateOrder(order) {
+      const quantities = Object.fromEntries(menu.map((item) => [item.name, Number(order.quantities?.[item.name] || 0)]));
+      const options = createDefaultOptions();
+      menu
+        .filter((item) => item.requiresTemperature)
+        .forEach((item) => {
+          options[item.name] = {
+            temperature: order.options?.[item.name]?.temperature || ""
+          };
+        });
+      return {
+        id: order.id || crypto.randomUUID(),
+        customer: order.customer || "",
+        note: order.note || "",
+        quantities,
+        options,
+        errors: {}
+      };
+    }
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (!saved) {
+          return {
+            orders: [],
+            draftOrder: createBlankOrder()
+          };
+        }
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return {
+            orders: parsed.map(hydrateOrder),
+            draftOrder: createBlankOrder()
+          };
+        }
+        return {
+          orders: Array.isArray(parsed.orders) ? parsed.orders.map(hydrateOrder) : [],
+          draftOrder: parsed.draftOrder ? hydrateOrder(parsed.draftOrder) : createBlankOrder()
+        };
+      } catch (error) {
+        return {
+          orders: [],
+          draftOrder: createBlankOrder()
+        };
+      }
+    }
+
+    function persist(options = {}) {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          orders: state.orders,
+          draftOrder: state.draftOrder
+        })
+      );
+      if (!options.skipRemote) {
+        scheduleRemoteSyncWrite();
+      }
+    }
+
+    function normalizeState(rawState) {
+      if (!rawState || typeof rawState !== "object") {
+        return {
+          orders: [],
+          draftOrder: createBlankOrder()
+        };
+      }
+      return {
+        orders: Array.isArray(rawState.orders) ? rawState.orders.map(hydrateOrder) : [],
+        draftOrder: rawState.draftOrder ? hydrateOrder(rawState.draftOrder) : createBlankOrder()
+      };
+    }
+
+    function setSyncStatus(message, status = "idle") {
+      if (!syncStatusEl) return;
+      syncStatusEl.textContent = message;
+      syncStatusEl.dataset.state = status;
+    }
+
+    function scheduleRemoteSyncWrite() {
+      if (!SYNC_ENDPOINT) return;
+      window.clearTimeout(syncWriteTimer);
+      syncWriteTimer = window.setTimeout(() => {
+        pushRemoteState();
+      }, 500);
+    }
+
+    async function pushRemoteState() {
+      if (!SYNC_ENDPOINT) return;
+      try {
+        setSyncStatus("正在同步到共享資料...", "idle");
+        const response = await fetch(SYNC_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify({
+            state: {
+              orders: state.orders,
+              draftOrder: state.draftOrder
+            }
+          })
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const payload = await response.json();
+        remoteUpdatedAt = payload.updatedAt || "";
+        setSyncStatus(`已同步共享資料 ${remoteUpdatedAt ? `(${remoteUpdatedAt})` : ""}`, "ok");
+      } catch (error) {
+        setSyncStatus(`同步失敗：${error.message || "可能是 Apps Script 權限或跨網域設定問題"}`, "error");
+      }
+    }
+
+    async function syncFromRemote(options = {}) {
+      if (!SYNC_ENDPOINT) {
+        if (options.forceMessage) {
+          setSyncStatus("尚未設定 Google Apps Script 網址，目前仍是本機模式。", "error");
+        }
+        return;
+      }
+      try {
+        setSyncStatus("正在讀取共享資料...", "idle");
+        const response = await fetch(`${SYNC_ENDPOINT}?t=${Date.now()}`, {
+          method: "GET",
+          cache: "no-store"
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const payload = await response.json();
+        const normalized = normalizeState(payload.state || payload);
+        state.orders = normalized.orders;
+        state.draftOrder = normalized.draftOrder;
+        remoteUpdatedAt = payload.updatedAt || "";
+        persist({ skipRemote: true });
+        render();
+        setSyncStatus(`已載入共享資料 ${remoteUpdatedAt ? `(${remoteUpdatedAt})` : ""}`, "ok");
+      } catch (error) {
+        setSyncStatus(`讀取共享資料失敗：${error.message || "請檢查 Apps Script 是否已部署為任何知道連結的人可存取"}`, "error");
+      }
+    }
+
+    function startRemoteSync() {
+      if (!SYNC_ENDPOINT) {
+        setSyncStatus("目前使用本機模式，尚未連接跨裝置同步。", "idle");
+        return;
+      }
+      syncFromRemote();
+      window.clearInterval(syncTimer);
+      syncTimer = window.setInterval(() => {
+        syncFromRemote();
+      }, SYNC_POLL_MS);
+    }
+
+    function getAdminPin() {
+      return localStorage.getItem(ADMIN_PIN_KEY) || ADMIN_PIN_DEFAULT;
+    }
+
+    function verifyAdminAccess() {
+      const existingPin = getAdminPin();
+      const inputPin = window.prompt("請輸入管理密碼以清空全部訂單");
+      if (inputPin === null) return false;
+      if (inputPin.trim() !== existingPin) {
+        window.alert("管理密碼錯誤，無法清空訂單");
+        return false;
+      }
+      return true;
+    }
+
+    function formatMoney(value) {
+      return new Intl.NumberFormat("zh-TW", {
+        style: "currency",
+        currency: "TWD",
+        maximumFractionDigits: 0
+      }).format(value);
+    }
+
+    function getOrderItemCount(order) {
+      return Object.values(order.quantities).reduce((sum, qty) => sum + qty, 0);
+    }
+
+    function getOrderTotal(order) {
+      return menu.reduce((sum, item) => sum + item.price * (order.quantities[item.name] || 0), 0);
+    }
+
+    function getTemperatureLabel(value) {
+      if (value === "iced") return "冷 Iced";
+      if (value === "hot") return "熱 Hot";
+      return "";
+    }
+
+    function getItemSummaryLabel(item, order) {
+      if (!item.requiresTemperature) return item.name;
+      const temperature = order.options?.[item.name]?.temperature || "";
+      return temperature ? `${item.name}（${getTemperatureLabel(temperature)}）` : item.name;
+    }
+
+    function adjustQty(itemName, delta) {
+      const order = state.draftOrder;
+      if (!order) return;
+      const item = menu.find((entry) => entry.name === itemName);
+      if (!item) return;
+      order.errors = order.errors || {};
+      if (delta > 0 && item.requiresTemperature) {
+        const temperature = order.options?.[item.name]?.temperature || "";
+        if (!temperature) {
+          order.errors[item.name] = "請先選擇冷 Iced 或 熱 Hot";
+          renderOrders();
+          return;
+        }
+      }
+      const nextValue = Math.max(0, (order.quantities[itemName] || 0) + delta);
+      order.quantities[itemName] = nextValue;
+      delete order.errors[itemName];
+      persist();
+      renderSummary();
+      renderOrders();
+    }
+
+    function updateItemTemperature(itemName, temperature) {
+      const order = state.draftOrder;
+      if (!order) return;
+      order.options = order.options || createDefaultOptions();
+      order.options[itemName] = { temperature };
+      order.errors = order.errors || {};
+      delete order.errors[itemName];
+      persist();
+      renderSummary();
+      renderOrders();
+    }
+
+    function updateDraftField(field, value) {
+      if (!state.draftOrder) return;
+      state.draftOrder[field] = value;
+      persist();
+    }
+
+    function confirmDraftOrder() {
+      const order = hydrateOrder(state.draftOrder || createBlankOrder());
+      order.errors = order.errors || {};
+      if (!order.customer.trim()) {
+        window.alert("請先填寫真實姓名");
+        return;
+      }
+      if (!getOrderItemCount(order)) {
+        window.alert("請至少選擇一個品項後再確認");
+        return;
+      }
+      state.orders.push(order);
+      state.draftOrder = createBlankOrder();
+      persist();
+      render();
+      orderFormPanelEl?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function removeOrder(orderId) {
+      state.orders = state.orders.filter((entry) => entry.id !== orderId);
+      persist();
+      render();
+    }
+
+    function renderOrders() {
+      ordersEl.innerHTML = "";
+      const order = state.draftOrder || createBlankOrder();
+      const card = document.createElement("article");
+      card.className = "order-card";
+
+      const selectedCount = getOrderItemCount(order);
+      const total = getOrderTotal(order);
+
+      card.innerHTML = `
+        <div class="order-head">
+          <div>
+            <strong>本筆填寫中訂單</strong>
+            <span>${selectedCount ? `已選 ${selectedCount} 份，共 ${formatMoney(total)}` : "尚未選擇品項"}</span>
+          </div>
+        </div>
+        <div class="order-body">
+          <div class="field-grid">
+            <div class="field">
+              <label for="draft-customer">姓名</label>
+              <input class="input" id="draft-customer" data-field="customer" placeholder="例如：Patricia" value="${escapeHtml(order.customer)}">
+            </div>
+            <div class="field full">
+              <label for="draft-note">備註</label>
+              <textarea class="textarea" id="draft-note" data-field="note" placeholder="甜度、取餐時間、代拿需求都可以寫在這裡">${escapeHtml(order.note)}</textarea>
+            </div>
+          </div>
+          ${menuCategories.map((category) => `
+            <section class="menu-section">
+              <h3 class="menu-section-title">${category}</h3>
+              <div class="menu-grid">
+                ${menu
+                  .filter((item) => item.category === category)
+                  .map((item) => `
+                    <section class="menu-card">
+                      <div class="menu-top">
+                        <div>
+                          <div class="menu-name">${item.name}</div>
+                          <div class="menu-meta">${item.category}${item.note ? ` · ${item.note}` : ""}</div>
+                        </div>
+                        <div class="price">${formatMoney(item.price)}</div>
+                      </div>
+                      ${item.requiresTemperature ? `
+                        <div class="option-group">
+                          <div class="option-label">請先選擇溫度</div>
+                          <div class="option-choices">
+                            <button class="option-choice ${(order.options?.[item.name]?.temperature || "") === "iced" ? "active" : ""}" type="button" data-item-name="${item.name}" data-temperature="iced">冷 Iced</button>
+                            <button class="option-choice ${(order.options?.[item.name]?.temperature || "") === "hot" ? "active" : ""}" type="button" data-item-name="${item.name}" data-temperature="hot">熱 Hot</button>
+                          </div>
+                          ${order.errors?.[item.name] ? `<div class="option-warning">${order.errors[item.name]}</div>` : ""}
+                        </div>
+                      ` : ""}
+                      <div class="qty-stepper">
+                        <button class="stepper-btn" type="button" data-item-name="${item.name}" data-delta="-1">-</button>
+                        <div class="qty-value">${order.quantities[item.name] || 0}</div>
+                        <button class="stepper-btn" type="button" data-item-name="${item.name}" data-delta="1">+</button>
+                      </div>
+                    </section>
+                  `).join("")}
+              </div>
+            </section>
+          `).join("")}
+          <div class="toolbar">
+            <button class="primary" id="confirm-order-btn" type="button">加入訂單</button>
+          </div>
+        </div>
+      `;
+
+      ordersEl.appendChild(card);
+
+      ordersEl.querySelectorAll(".stepper-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          adjustQty(button.dataset.itemName, Number(button.dataset.delta));
+        });
+      });
+
+      ordersEl.querySelectorAll(".option-choice").forEach((button) => {
+        button.addEventListener("click", () => {
+          updateItemTemperature(button.dataset.itemName, button.dataset.temperature);
+        });
+      });
+
+      ordersEl.querySelector("#confirm-order-btn")?.addEventListener("click", () => {
+        confirmDraftOrder();
+      });
+
+      ordersEl.querySelectorAll("[data-field]").forEach((input) => {
+        input.addEventListener("input", () => {
+          updateDraftField(input.dataset.field, input.value);
+        });
+      });
+    }
+
+    function renderSummary() {
+      const itemTotals = {};
+      let totalItems = 0;
+      let totalAmount = 0;
+      let dessertCount = 0;
+      let drinkCount = 0;
+
+      state.orders.forEach((order) => {
+        menu.forEach((item) => {
+          const qty = order.quantities[item.name] || 0;
+          if (!qty) return;
+          const summaryLabel = getItemSummaryLabel(item, order);
+          if (!itemTotals[summaryLabel]) {
+            itemTotals[summaryLabel] = {
+              name: summaryLabel,
+              category: item.category,
+              price: item.price,
+              qty: 0
+            };
+          }
+          itemTotals[summaryLabel].qty += qty;
+          totalItems += qty;
+          totalAmount += qty * item.price;
+          if (item.category === "甜點") dessertCount += qty;
+          if (item.category === "飲料") drinkCount += qty;
+        });
+      });
+
+      menuCountEl.textContent = String(menu.length);
+      orderCountEl.textContent = String(state.orders.length);
+      itemCountEl.textContent = String(totalItems);
+      totalAmountEl.textContent = formatMoney(totalAmount);
+      orderSummaryTotalEl.textContent = formatMoney(totalAmount);
+      summaryOrdersEl.textContent = String(state.orders.length);
+      summaryItemsEl.textContent = String(totalItems);
+      dessertCountEl.textContent = String(dessertCount);
+      drinkCountEl.textContent = String(drinkCount);
+
+      const activeItems = Object.values(itemTotals)
+        .map((item) => ({
+          ...item,
+          subtotal: item.qty * item.price
+        }))
+        .sort((a, b) => b.qty - a.qty || a.price - b.price);
+
+      if (!activeItems.length) {
+        itemSummaryEl.innerHTML = `<div class="empty">目前還沒有任何品項被選取，左邊新增訂單後，這裡會自動整理數量與金額。</div>`;
+      } else {
+        itemSummaryEl.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>品項</th>
+                <th>數量</th>
+                <th>小計</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${activeItems.map((item) => `
+                <tr>
+                  <td>${item.name}<br><span class="menu-meta">${item.category}</span></td>
+                  <td>${item.qty}</td>
+                  <td>${formatMoney(item.subtotal)}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+
+      const activeOrders = state.orders
+        .map((order) => ({
+          ...order,
+          count: getOrderItemCount(order),
+          total: getOrderTotal(order)
+        }))
+        .filter((order) => order.count > 0 || order.customer || order.note);
+
+      if (!activeOrders.length) {
+        orderSummaryEl.innerHTML = `<div class="empty">目前沒有可整理的訂單資料。</div>`;
+      } else {
+        orderSummaryEl.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>訂購人</th>
+                <th>內容</th>
+                <th>金額</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${activeOrders.map((order, index) => `
+                <tr>
+                  <td>${escapeHtml(order.customer || `訂購人 ${index + 1}`)}</td>
+                  <td>${renderOrderItems(order)}</td>
+                  <td>${formatMoney(order.total)}</td>
+                  <td><button class="ghost summary-remove-btn" type="button" data-order-id="${order.id}">刪除</button></td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+        orderSummaryEl.querySelectorAll(".summary-remove-btn").forEach((button) => {
+          button.addEventListener("click", () => removeOrder(button.dataset.orderId));
+        });
+      }
+    }
+
+    function renderOrderItems(order) {
+      const parts = menu
+        .filter((item) => (order.quantities[item.name] || 0) > 0)
+        .map((item) => `${getItemSummaryLabel(item, order)} x ${order.quantities[item.name]}`);
+      if (!parts.length) {
+        return `<span class="menu-meta">${escapeHtml(order.note || "尚未選品")}</span>`;
+      }
+      if (order.note) {
+        parts.push(`備註：${escapeHtml(order.note)}`);
+      }
+      return parts.join("<br>");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function render() {
+      renderOrders();
+      renderSummary();
+    }
+
+    render();
+    startRemoteSync();
+  </script>
+</body>
+</html>
